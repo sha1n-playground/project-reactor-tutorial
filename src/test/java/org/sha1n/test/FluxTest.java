@@ -4,6 +4,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.junit.Test;
 import org.reactivestreams.Subscription;
 import reactor.core.publisher.BaseSubscriber;
+import reactor.core.publisher.ConnectableFlux;
 import reactor.core.publisher.Flux;
 import reactor.test.StepVerifier;
 
@@ -88,6 +89,20 @@ public class FluxTest {
                 .verifyComplete();
     }
 
+    @Test
+    public void fluxSubscriberWithSimplerBackpressureTest() {
+        Flux<Integer> flux = Flux
+                .range(1, 10)
+                .log()
+                .limitRate(2);
+
+        flux.subscribe(i -> log.info("Git: {}", i));
+
+        StepVerifier
+                .create(flux)
+                .expectNext(1, 2, 3, 4, 5, 6, 7, 8, 9, 10)
+                .verifyComplete();
+    }
 
     @Test
     public void fluxSubscriberIntervalTest() {
@@ -100,6 +115,41 @@ public class FluxTest {
                 .thenAwait(Duration.ofHours(1))
                 .expectNext(1L)
                 .thenCancel()
+                .verify();
+    }
+
+    @Test
+    public void connectableFluxTest() {
+        ConnectableFlux<Integer> connectableFlux = Flux
+                .range(1, 10)
+                .log()
+                .delayElements(Duration.ofMillis(10))
+                .publish();
+
+        // starts to publish events once connected and regardless of the presence of any subscribers
+        StepVerifier
+                .create(connectableFlux)
+                .then(connectableFlux::connect)
+                .thenConsumeWhile(i -> i < 9)
+                .expectNext(9, 10)
+                .expectComplete()
+                .verify();
+    }
+
+    @Test
+    public void connectableFluxAutoConnectWithMinSubscribersTest() {
+        Flux<Integer> autoConnectFlux = Flux
+                .range(1, 10)
+                .log()
+                .delayElements(Duration.ofMillis(10))
+                .publish()
+                .autoConnect(2);
+
+        StepVerifier
+                .create(autoConnectFlux)
+                .then(autoConnectFlux::subscribe)
+                .expectNext(1, 2, 3, 4, 5, 6, 7, 8, 9, 10)
+                .expectComplete()
                 .verify();
     }
 
