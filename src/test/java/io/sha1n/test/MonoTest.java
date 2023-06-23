@@ -1,9 +1,9 @@
-package org.sha1n.test;
+package io.sha1n.test;
 
 import lombok.extern.slf4j.Slf4j;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import org.reactivestreams.Subscription;
-import org.sha1n.domain.DomainException;
+import io.sha1n.domain.DomainException;
 import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
 

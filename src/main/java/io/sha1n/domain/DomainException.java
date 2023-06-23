@@ -1,4 +1,4 @@
-package org.sha1n.domain;
+package io.sha1n.domain;
 
 public class DomainException extends RuntimeException {
     public DomainException() {
